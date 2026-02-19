@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 
 // @ts-ignore - Import من JavaScript files
 import { contactAPI } from "../shared-api-config/api/endpoints"
+// @ts-ignore - Design System
+import { COLORS, THERMAL_COLORS, STAGE_COLORS, getThermalColor } from "../lib/designSystem"
 
 interface Contact {
   id: number
@@ -201,71 +203,29 @@ export default function ContactsPage() {
       .join("")
   }
 
-  // Temperature badge styles
+  // Temperature badge styles - using Design System THERMAL_COLORS
   const getTempStyles = (temp: string) => {
-    switch (temp) {
-      case "hot":
-        return {
-          bg: "bg-red-50",
-          text: "text-red-600",
-          label: "ساخن",
-          icon: "🔥",
-          ring: "ring-2 ring-red-400 animate-pulse",
-        }
-      case "warm":
-        return {
-          bg: "bg-amber-50",
-          text: "text-amber-600",
-          label: "دافئ",
-          icon: "⚠️",
-          ring: "",
-        }
-      case "cold":
-        return {
-          bg: "bg-blue-50",
-          text: "text-blue-600",
-          label: "بارد",
-          icon: "🧊",
-          ring: "",
-        }
-      case "frozen":
-        return {
-          bg: "bg-gray-50",
-          text: "text-gray-600",
-          label: "متجمد",
-          icon: "❄️",
-          ring: "",
-        }
-      default:
-        return {
-          bg: "bg-gray-50",
-          text: "text-gray-600",
-          label: "غير محدد",
-          icon: "",
-          ring: "",
-        }
+    const thermal = getThermalColor(temp)
+    const meta: Record<string, { label: string; icon: string; ring: string }> = {
+      hot: { label: "ساخن", icon: "🔥", ring: "ring-2 ring-red-400 animate-pulse" },
+      warm: { label: "دافئ", icon: "⚠️", ring: "" },
+      cold: { label: "بارد", icon: "🧊", ring: "" },
+      frozen: { label: "متجمد", icon: "❄️", ring: "" },
+    }
+    const info = meta[temp] || { label: "غير محدد", icon: "", ring: "" }
+    return {
+      style: { backgroundColor: thermal.bg, color: thermal.text },
+      ...info,
     }
   }
 
-  // Stage badge styles
+  // Stage badge styles - using Design System STAGE_COLORS
   const getStageStyles = (stage: string) => {
-    switch (stage) {
-      case "contact":
-        return { bg: "bg-gray-50", text: "text-gray-600", label: "Contact" }
-      case "subscriber":
-        return { bg: "bg-blue-50", text: "text-blue-600", label: "Subscriber" }
-      case "lead":
-        return { bg: "bg-yellow-50", text: "text-yellow-700", label: "Lead" }
-      case "mql":
-        return { bg: "bg-orange-50", text: "text-orange-600", label: "MQL" }
-      case "sql":
-        return { bg: "bg-red-100", text: "text-red-700", label: "SQL" }
-      case "customer":
-        return { bg: "bg-green-50", text: "text-green-600", label: "Customer" }
-      case "frozen":
-        return { bg: "bg-sky-50", text: "text-sky-600", label: "Frozen" }
-      default:
-        return { bg: "bg-gray-50", text: "text-gray-600", label: stage }
+    const key = stage?.toLowerCase() as keyof typeof STAGE_COLORS
+    const stageColor = STAGE_COLORS[key] || STAGE_COLORS.contact
+    return {
+      style: { backgroundColor: stageColor.bg, color: stageColor.text },
+      label: stageColor.name,
     }
   }
 
@@ -291,7 +251,7 @@ export default function ContactsPage() {
 
   if (loading) {
     return (
-      <div dir="rtl" className="min-h-screen bg-gray-50 p-6">
+      <div dir="rtl" className="min-h-screen p-6" style={{ backgroundColor: COLORS.bgPrimary }}>
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Skeleton loading */}
           <div className="h-20 bg-gray-200 rounded-xl animate-pulse" />
@@ -308,7 +268,7 @@ export default function ContactsPage() {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 p-6">
+    <div dir="rtl" className="min-h-screen p-6" style={{ backgroundColor: COLORS.bgPrimary }}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Error Banner */}
         {error && (
@@ -326,8 +286,8 @@ export default function ContactsPage() {
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
-            <p className="text-sm text-gray-500 mt-1">إدارة جهات الاتصال</p>
+            <h1 className="text-3xl font-bold" style={{ color: COLORS.textPrimary }}>Contacts</h1>
+            <p className="text-sm mt-1" style={{ color: COLORS.textSecondary }}>إدارة جهات الاتصال</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -344,7 +304,7 @@ export default function ContactsPage() {
               </svg>
               Export
             </button>
-            <button className="px-4 py-2 border border-purple-500 rounded-lg text-sm font-medium text-purple-600 hover:bg-purple-50 flex items-center gap-2">
+            <button className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:opacity-80" style={{ border: `1px solid ${COLORS.primary}`, color: COLORS.primary }}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -355,7 +315,7 @@ export default function ContactsPage() {
               </svg>
               Import CSV
             </button>
-            <button className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
+            <button className="px-4 py-2 text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:opacity-90" style={{ backgroundColor: COLORS.primary }}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
@@ -367,19 +327,19 @@ export default function ContactsPage() {
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Card 1: Total Contacts */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center mb-4">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
               </svg>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{stats.total.toLocaleString()}</div>
-            <div className="text-sm text-gray-600 mb-2">إجمالي الجهات</div>
-            <div className="text-xs text-gray-500">Total Contacts</div>
+            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.total.toLocaleString()}</div>
+            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>إجمالي الجهات</div>
+            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Total Contacts</div>
           </div>
 
           {/* Card 2: Hot Leads */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center mb-4">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -389,25 +349,25 @@ export default function ContactsPage() {
                 />
               </svg>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{stats.hot}</div>
-            <div className="text-sm text-gray-600 mb-2">عملاء ساخنون</div>
-            <div className="text-xs text-gray-500">Hot Leads</div>
+            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.hot}</div>
+            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>عملاء ساخنون</div>
+            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Hot Leads</div>
           </div>
 
           {/* Card 3: GHL Transfers */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center mb-4">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
               </svg>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{stats.ghlTransfers}</div>
-            <div className="text-sm text-gray-600 mb-2">تحويلات</div>
-            <div className="text-xs text-gray-500">GHL Transfers</div>
+            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.ghlTransfers}</div>
+            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>تحويلات</div>
+            <div className="text-xs" style={{ color: COLORS.textSecondary }}>GHL Transfers</div>
           </div>
 
           {/* Card 4: Frozen */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center mb-4">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -417,9 +377,9 @@ export default function ContactsPage() {
                 />
               </svg>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{stats.frozen}</div>
-            <div className="text-sm text-gray-600 mb-2">متجمدة</div>
-            <div className="text-xs text-gray-500">Frozen</div>
+            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.frozen}</div>
+            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>متجمدة</div>
+            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Frozen</div>
             {stats.frozen > 0 && <div className="mt-4 text-red-600 text-sm font-medium">Need attention</div>}
           </div>
         </div>
@@ -431,13 +391,13 @@ export default function ContactsPage() {
               تم تحديد {selectedContacts.length} من أصل {totalCount} جهة اتصال
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={handleExport} className="px-3 py-1.5 border border-purple-500 text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-50">
+              <button onClick={handleExport} className="px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80" style={{ border: `1px solid ${COLORS.primary}`, color: COLORS.primary }}>
                 Export
               </button>
-              <button className="px-3 py-1.5 border border-purple-500 text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-50">
+              <button className="px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80" style={{ border: `1px solid ${COLORS.primary}`, color: COLORS.primary }}>
                 Add Tag
               </button>
-              <button className="px-3 py-1.5 border border-purple-500 text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-50">
+              <button className="px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80" style={{ border: `1px solid ${COLORS.primary}`, color: COLORS.primary }}>
                 Change Temp
               </button>
               <button className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
@@ -466,7 +426,7 @@ export default function ContactsPage() {
         )}
 
         {/* Filters & Search */}
-        <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
+        <div className="rounded-xl p-6 shadow-sm space-y-4" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
           {/* Search Bar */}
           <div className="relative">
             <input
@@ -548,7 +508,7 @@ export default function ContactsPage() {
         </div>
 
         {/* Contacts Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="rounded-xl shadow-sm overflow-hidden" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 sticky top-0 z-10">
@@ -600,9 +560,9 @@ export default function ContactsPage() {
                               {getInitials(contact.name)}
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">{contact.name}</div>
-                              <div className="text-xs text-gray-500">{contact.email}</div>
-                              {contact.phone && <div className="text-xs text-gray-500">{contact.phone}</div>}
+                              <div className="text-sm font-semibold" style={{ color: COLORS.textPrimary }}>{contact.name}</div>
+                              <div className="text-xs" style={{ color: COLORS.textSecondary }}>{contact.email}</div>
+                              {contact.phone && <div className="text-xs" style={{ color: COLORS.textSecondary }}>{contact.phone}</div>}
                             </div>
                           </div>
                         </td>
@@ -615,21 +575,23 @@ export default function ContactsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${tempStyles.bg} ${tempStyles.text} ${tempStyles.ring}`}
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${tempStyles.ring}`}
+                            style={tempStyles.style}
                           >
                             {tempStyles.label}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${stageStyles.bg} ${stageStyles.text}`}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                            style={stageStyles.style}
                           >
                             {stageStyles.label}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           {contact.group ? (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border border-purple-500 text-purple-600">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" style={{ border: `1px solid ${COLORS.primary}`, color: COLORS.primary }}>
                               {contact.group}
                             </span>
                           ) : (
@@ -726,7 +688,7 @@ export default function ContactsPage() {
 
           {/* Pagination */}
           <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm" style={{ color: COLORS.textSecondary }}>
               عرض {contacts.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0}-{Math.min(currentPage * rowsPerPage, totalCount)} من أصل {totalCount} جهة اتصال
             </div>
             <div className="flex items-center gap-2">
@@ -736,9 +698,10 @@ export default function ContactsPage() {
                   onClick={() => setRowsPerPage(size)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
                     rowsPerPage === size
-                      ? "border-2 border-purple-600 text-purple-600 font-semibold"
+                      ? "border-2 font-semibold"
                       : "border border-gray-300 text-gray-700 hover:bg-gray-100"
                   }`}
+                  style={rowsPerPage === size ? { borderColor: COLORS.primary, color: COLORS.primary } : undefined}
                 >
                   {size}
                 </button>
@@ -752,7 +715,7 @@ export default function ContactsPage() {
               >
                 ← Previous
               </button>
-              <button className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-semibold">
+              <button className="px-3 py-1.5 text-white rounded-lg text-sm font-semibold" style={{ backgroundColor: COLORS.primary }}>
                 {currentPage}
               </button>
               {totalPages > 1 && currentPage < totalPages && (
@@ -771,7 +734,8 @@ export default function ContactsPage() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-purple-600 hover:bg-purple-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium hover:opacity-80 disabled:text-gray-400 disabled:cursor-not-allowed"
+                style={{ color: currentPage >= totalPages ? undefined : COLORS.primary }}
               >
                 Next →
               </button>
