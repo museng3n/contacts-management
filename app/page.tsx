@@ -116,6 +116,15 @@ export default function ContactsPage() {
   }, [])
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlToken = urlParams.get('token')
+    if (urlToken) {
+      localStorage.setItem('authToken', urlToken)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  useEffect(() => {
     fetchContacts()
     fetchStats()
   }, [fetchContacts, fetchStats])
