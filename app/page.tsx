@@ -324,7 +324,7 @@ export default function ContactsPage() {
               </svg>
               Import CSV
             </button>
-            <button className="px-4 py-2 text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:opacity-90" style={{ backgroundColor: COLORS.primary }}>
+            <button className="px-4 py-2 text-white rounded-lg text-sm font-medium flex items-center gap-2 bg-violet-600 hover:bg-gradient-to-r hover:from-purple-400 hover:via-pink-400 hover:to-orange-300 hover:shadow-lg hover:scale-105 transition-all duration-300">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
@@ -335,39 +335,24 @@ export default function ContactsPage() {
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1: Total Contacts */}
+          {/* Card 1: Frozen */}
           <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+            <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m-6.36-3.64l12.72-12.72M3 12h18M5.64 5.64l12.72 12.72" />
               </svg>
             </div>
-            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.total.toLocaleString()}</div>
-            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>إجمالي الجهات</div>
-            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Total Contacts</div>
+            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.frozen}</div>
+            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>مجمدة</div>
+            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Frozen</div>
+            {stats.frozen > 0 && <div className="mt-4 text-red-600 text-sm font-medium">Need attention</div>}
           </div>
 
-          {/* Card 2: Hot Leads */}
+          {/* Card 2: GHL Transfers */}
           <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.hot}</div>
-            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>عملاء ساخنون</div>
-            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Hot Leads</div>
-          </div>
-
-          {/* Card 3: GHL Transfers */}
-          <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>
             </div>
             <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.ghlTransfers}</div>
@@ -375,21 +360,28 @@ export default function ContactsPage() {
             <div className="text-xs" style={{ color: COLORS.textSecondary }}>GHL Transfers</div>
           </div>
 
-          {/* Card 4: Frozen */}
+          {/* Card 3: Hot Leads */}
           <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z"
-                  clipRule="evenodd"
-                />
+            <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 6.51 6.51 0 009 11.5a3 3 0 105.599-1.5c.474-.896.703-1.653.703-2.786 0-.558-.09-1.092-.243-1.594A4.762 4.762 0 0115.362 5.214z" />
               </svg>
             </div>
-            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.frozen}</div>
-            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>متجمدة</div>
-            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Frozen</div>
-            {stats.frozen > 0 && <div className="mt-4 text-red-600 text-sm font-medium">Need attention</div>}
+            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.hot}</div>
+            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>عملاء ساخنون</div>
+            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Hot Leads</div>
+          </div>
+
+          {/* Card 4: Total Contacts */}
+          <div className="rounded-xl p-6 shadow-sm" style={{ backgroundColor: COLORS.bgWhite, border: `1px solid ${COLORS.borderGray}` }}>
+            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+              </svg>
+            </div>
+            <div className="text-3xl font-bold mb-1" style={{ color: COLORS.textPrimary }}>{stats.total.toLocaleString()}</div>
+            <div className="text-sm mb-2" style={{ color: COLORS.textSecondary }}>إجمالي الجهات</div>
+            <div className="text-xs" style={{ color: COLORS.textSecondary }}>Total Contacts</div>
           </div>
         </div>
 
