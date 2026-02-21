@@ -81,7 +81,7 @@ export const isTokenValid = () => {
 export const logout = () => {
   removeToken();
   removeUser();
-  window.location.href = '/login';
+  window.location.href = 'https://triggerio-auth.vercel.app/login';
 };
 
 // ==========================================
