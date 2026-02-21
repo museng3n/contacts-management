@@ -122,9 +122,6 @@ export default function ContactsPage() {
       localStorage.setItem('triggerio_token', urlToken)
       window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [])
-
-  useEffect(() => {
     fetchContacts()
     fetchStats()
   }, [fetchContacts, fetchStats])
