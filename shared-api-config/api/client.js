@@ -59,7 +59,11 @@ apiClient.interceptors.response.use(
       switch (status) {
         case HTTP_STATUS.UNAUTHORIZED:
           removeToken();
-          window.top.location.href = 'https://triggerio-auth.vercel.app/login';
+          try {
+            window.top.location.href = 'https://triggerio-auth.vercel.app/login';
+          } catch(e) {
+            window.parent.postMessage({ type: 'AUTH_REQUIRED' }, 'https://triggerio-shell.vercel.app');
+          }
           return Promise.reject({
             message: ERROR_MESSAGES.UNAUTHORIZED,
             ...errorData,
