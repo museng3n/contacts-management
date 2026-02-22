@@ -72,7 +72,8 @@ export default function ContactsPage() {
       const response = await contactAPI.getAll(params)
       console.log("✅ Contacts received:", response)
 
-      const mappedContacts: Contact[] = (response.contacts || response.data || response || []).map(
+      const contactsList = Array.isArray(response.data) ? response.data : (response.data?.contacts || response.contacts || [])
+      const mappedContacts: Contact[] = contactsList.map(
         (c: any, index: number) => ({
           id: c._id || c.id || index + 1,
           name: c.name || (c.firstName ? `${c.firstName} ${c.lastName || ""}`.trim() : c.email || "غير معروف"),
