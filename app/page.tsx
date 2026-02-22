@@ -50,6 +50,9 @@ export default function ContactsPage() {
   const [rowsPerPage, setRowsPerPage] = useState(50)
   const [totalCount, setTotalCount] = useState(0)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
+  const [isAddContactOpen, setIsAddContactOpen] = useState(false)
+  const [addingContact, setAddingContact] = useState(false)
+  const [newContact, setNewContact] = useState({ name: "", email: "", phone: "", source: "Manual" })
 
   const fetchContacts = useCallback(async () => {
     setLoading(true)
@@ -201,6 +204,30 @@ export default function ContactsPage() {
     }
   }
 
+  // Handle add contact
+  const handleAddContact = async () => {
+    if (!newContact.name.trim()) return alert("الاسم مطلوب")
+
+    setAddingContact(true)
+    try {
+      await contactAPI.create({
+        name: newContact.name.trim(),
+        email: newContact.email.trim() || undefined,
+        phone: newContact.phone.trim() || undefined,
+        source: newContact.source,
+      })
+      setIsAddContactOpen(false)
+      setNewContact({ name: "", email: "", phone: "", source: "Manual" })
+      fetchContacts()
+      fetchStats()
+    } catch (err: any) {
+      console.error("Failed to add contact:", err)
+      alert(err.message || "فشل في إضافة جهة الاتصال")
+    } finally {
+      setAddingContact(false)
+    }
+  }
+
   // Get initials from name
   const getInitials = (name: string) => {
     const parts = name.split(" ")
@@ -322,7 +349,7 @@ export default function ContactsPage() {
               </svg>
               Import CSV
             </button>
-            <button className="px-4 py-2 text-white rounded-lg text-sm font-medium flex items-center gap-2 bg-violet-600 hover:bg-gradient-to-r hover:from-purple-400 hover:via-pink-400 hover:to-orange-300 hover:shadow-lg hover:scale-105 transition-all duration-300">
+            <button onClick={() => setIsAddContactOpen(true)} className="px-4 py-2 text-white rounded-lg text-sm font-medium flex items-center gap-2 bg-violet-600 hover:bg-gradient-to-r hover:from-purple-400 hover:via-pink-400 hover:to-orange-300 hover:shadow-lg hover:scale-105 transition-all duration-300">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
@@ -742,6 +769,79 @@ export default function ContactsPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Contact Dialog */}
+      {isAddContactOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setIsAddContactOpen(false)}>
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl" dir="rtl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-4" style={{ color: COLORS.textPrimary }}>إضافة جهة اتصال</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الاسم *</label>
+                <input
+                  type="text"
+                  placeholder="الاسم الكامل"
+                  value={newContact.name}
+                  onChange={(e) => setNewContact((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 text-right focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
+                <input
+                  type="email"
+                  placeholder="email@example.com"
+                  value={newContact.email}
+                  onChange={(e) => setNewContact((prev) => ({ ...prev, email: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 text-left focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
+                <input
+                  type="tel"
+                  placeholder="+966..."
+                  value={newContact.phone}
+                  onChange={(e) => setNewContact((prev) => ({ ...prev, phone: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 text-left focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">المصدر</label>
+                <select
+                  value={newContact.source}
+                  onChange={(e) => setNewContact((prev) => ({ ...prev, source: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 text-right focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="Manual">Manual</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="Email">Email</option>
+                  <option value="Import">Import</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mt-6 justify-start">
+              <button
+                onClick={() => setIsAddContactOpen(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleAddContact}
+                disabled={addingContact}
+                className="px-6 py-2 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
+                style={{ backgroundColor: COLORS.primary }}
+              >
+                {addingContact ? "جاري الإضافة..." : "إضافة"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
