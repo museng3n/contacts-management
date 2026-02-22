@@ -52,7 +52,7 @@ export default function ContactsPage() {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
   const [isAddContactOpen, setIsAddContactOpen] = useState(false)
   const [addingContact, setAddingContact] = useState(false)
-  const [newContact, setNewContact] = useState({ name: "", email: "", phone: "", source: "Manual" })
+  const [newContact, setNewContact] = useState({ name: "", email: "", phone: "", source: "manual" })
 
   const fetchContacts = useCallback(async () => {
     setLoading(true)
