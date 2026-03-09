@@ -172,6 +172,30 @@ function ContactDetailsInner() {
     updateTags(tags.filter(t => t !== tagToRemove))
   }
 
+  const handleDeleteContact = async () => {
+    if (!confirm("هل أنت متأكد من حذف جهة الاتصال؟")) return
+    const token = getToken()
+    if (!token || !contactId) return
+    try {
+      const res = await fetch(`https://triggerio-backend.onrender.com/api/contacts/${contactId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (data.status === 'success') {
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: 'NAVIGATE', url: 'https://contacts-management-plum.vercel.app' }, '*')
+        } else {
+          window.history.back()
+        }
+      } else {
+        alert(data.message || 'فشل حذف جهة الاتصال')
+      }
+    } catch {
+      alert('فشل الاتصال بالسيرفر')
+    }
+  }
+
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-[#f3f4f6] to-[#e5e7eb] p-6">
       <div className="max-w-[1400px] mx-auto">
@@ -224,6 +248,7 @@ function ContactDetailsInner() {
               <div className="flex flex-wrap gap-3">
                 {ACTION_BTNS.map((btn, i) => (
                   <button key={i}
+                    onClick={btn.label === "حذف" ? handleDeleteContact : undefined}
                     className="px-4 py-2.5 border-2 rounded-lg font-[600] text-[14px] transition-all flex items-center gap-2"
                     style={{ borderColor: btn.border, color: btn.border }}
                     onMouseEnter={e => { const el = e.currentTarget; el.style.backgroundColor = btn.border; el.style.color = "white" }}
