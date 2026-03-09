@@ -225,7 +225,7 @@ export default function ContactsPage() {
         source: newContact.source,
       })
       setIsAddContactOpen(false)
-      setNewContact({ name: "", email: "", phone: "", source: "Manual" })
+      setNewContact({ name: "", email: "", phone: "", source: "manual" })
       fetchContacts()
       fetchStats()
     } catch (err: any) {
@@ -860,11 +860,11 @@ export default function ContactsPage() {
                   onChange={(e) => setNewContact((prev) => ({ ...prev, source: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 text-right focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
-                  <option value="Manual">Manual</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="Facebook">Facebook</option>
-                  <option value="Email">Email</option>
-                  <option value="Import">Import</option>
+                  <option value="manual">Manual</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="email">Email</option>
+                  <option value="csv">CSV</option>
                 </select>
               </div>
             </div>
