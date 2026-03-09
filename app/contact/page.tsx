@@ -94,7 +94,6 @@ function ContactDetailsInner() {
 
   useEffect(() => {
     if (!contactId) return
-    console.log('Contact ID from URL:', contactId)
     const urlParams = new URLSearchParams(window.location.search)
     const rawToken = urlParams.get('token')
     const urlToken = rawToken ? decodeURIComponent(rawToken) : null
@@ -105,7 +104,6 @@ function ContactDetailsInner() {
     })
       .then(r => r.json())
       .then(data => {
-        console.log('API Response:', JSON.stringify(data))
         if (data.status === 'success') {
           const contactData = data.data?.gh1 || data.data
           setContact(contactData)
