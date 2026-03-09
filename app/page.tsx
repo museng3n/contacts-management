@@ -57,6 +57,19 @@ export default function ContactsPage() {
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
   const [deleteTargetType, setDeleteTargetType] = useState<'single' | 'bulk'>('single')
 
+  // CSV Import state
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importStep, setImportStep] = useState(1)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([])
+  const [csvPreview, setCsvPreview] = useState<string[][]>([])
+  const [importMapping, setImportMapping] = useState({ emailColumn: "", nameColumn: "", phoneColumn: "" })
+  const [importConsent, setImportConsent] = useState(false)
+  const [importLoading, setImportLoading] = useState(false)
+  const [importResults, setImportResults] = useState<any>(null)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
   const fetchContacts = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -236,6 +249,124 @@ export default function ContactsPage() {
     }
   }
 
+  // CSV Import helpers
+  const EMAIL_NAMES = ["email", "e-mail", "البريد", "mail", "emailaddress", "email_address"]
+  const NAME_NAMES = ["name", "الاسم", "fullname", "full_name", "اسم"]
+  const PHONE_NAMES = ["phone", "الهاتف", "mobile", "telephone", "هاتف", "رقم"]
+
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = []
+    let current = ""
+    let inQuotes = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (ch === '"') {
+        inQuotes = !inQuotes
+      } else if (ch === ',' && !inQuotes) {
+        result.push(current.trim())
+        current = ""
+      } else {
+        current += ch
+      }
+    }
+    result.push(current.trim())
+    return result
+  }
+
+  const handleCSVFileSelected = (file: File) => {
+    if (!file.name.endsWith('.csv')) {
+      setImportError("يُسمح فقط بملفات CSV")
+      return
+    }
+    setImportFile(file)
+    setImportError(null)
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      let text = e.target?.result as string
+      // Handle BOM
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1)
+
+      const lines = text.split(/\r?\n/).filter(l => l.trim())
+      if (lines.length < 2) {
+        setImportError("الملف لا يحتوي على بيانات كافية")
+        return
+      }
+
+      const headers = parseCSVLine(lines[0])
+      setCsvHeaders(headers)
+
+      // Preview first 3 data rows
+      const preview: string[][] = []
+      for (let i = 1; i < Math.min(4, lines.length); i++) {
+        preview.push(parseCSVLine(lines[i]))
+      }
+      setCsvPreview(preview)
+
+      // Auto-detect columns
+      const lowerHeaders = headers.map(h => h.toLowerCase().trim())
+      let emailCol = "", nameCol = "", phoneCol = ""
+      lowerHeaders.forEach((h, i) => {
+        if (!emailCol && EMAIL_NAMES.includes(h)) emailCol = headers[i]
+        if (!nameCol && NAME_NAMES.includes(h)) nameCol = headers[i]
+        if (!phoneCol && PHONE_NAMES.includes(h)) phoneCol = headers[i]
+      })
+      setImportMapping({ emailColumn: emailCol, nameColumn: nameCol, phoneColumn: phoneCol })
+    }
+    reader.readAsText(file, 'utf-8')
+  }
+
+  const handleImportSubmit = async () => {
+    if (!importFile || !importMapping.emailColumn) return
+
+    setImportLoading(true)
+    setImportError(null)
+    setImportStep(3)
+
+    try {
+      const token = localStorage.getItem('triggerio_token')
+      if (!token) throw new Error("يرجى تسجيل الدخول أولاً")
+
+      const formData = new FormData()
+      formData.append('file', importFile)
+      formData.append('emailColumn', importMapping.emailColumn)
+      if (importMapping.nameColumn) formData.append('nameColumn', importMapping.nameColumn)
+      if (importMapping.phoneColumn) formData.append('phoneColumn', importMapping.phoneColumn)
+
+      const response = await fetch('https://triggerio-backend.onrender.com/api/contacts/import-csv', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "فشل الاستيراد")
+      }
+
+      setImportResults(data.data)
+    } catch (err: any) {
+      setImportError(err.message || "حدث خطأ أثناء الاستيراد")
+    } finally {
+      setImportLoading(false)
+    }
+  }
+
+  const resetImportModal = () => {
+    setShowImportModal(false)
+    setImportStep(1)
+    setImportFile(null)
+    setCsvHeaders([])
+    setCsvPreview([])
+    setImportMapping({ emailColumn: "", nameColumn: "", phoneColumn: "" })
+    setImportConsent(false)
+    setImportLoading(false)
+    setImportResults(null)
+    setImportError(null)
+    setIsDragging(false)
+  }
+
   // Get initials from name
   const getInitials = (name: string) => {
     const parts = name.split(" ")
@@ -346,7 +477,11 @@ export default function ContactsPage() {
               </svg>
               Export
             </button>
-            <button className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:opacity-80" style={{ border: `1px solid ${COLORS.primary}`, color: COLORS.primary }}>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:opacity-80"
+              style={{ border: `1px solid ${COLORS.primary}`, color: COLORS.primary }}
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -884,6 +1019,316 @@ export default function ContactsPage() {
                 {addingContact ? "جاري الإضافة..." : "إضافة"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full mx-4" dir="rtl" onClick={(e) => e.stopPropagation()}>
+            {/* Step Indicator */}
+            <div className="flex items-center justify-center gap-3 mb-6">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex items-center gap-2">
+                  <div
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      importStep === step
+                        ? "bg-purple-600 scale-125"
+                        : importStep > step
+                        ? "bg-purple-400"
+                        : "bg-gray-300"
+                    }`}
+                  />
+                  {step < 3 && (
+                    <div className={`w-8 h-0.5 ${importStep > step ? "bg-purple-400" : "bg-gray-300"}`} />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* STEP 1: File Upload */}
+            {importStep === 1 && (
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">استيراد CSV</h3>
+                <p className="text-gray-500 text-sm mb-6 text-center">ارفع ملف CSV يحتوي على جهات الاتصال</p>
+
+                <div
+                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
+                    isDragging
+                      ? "border-purple-500 bg-purple-50"
+                      : importFile
+                      ? "border-green-400 bg-green-50"
+                      : "border-purple-300 hover:border-purple-500 hover:bg-purple-50"
+                  }`}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setIsDragging(false)
+                    const file = e.dataTransfer.files[0]
+                    if (file) handleCSVFileSelected(file)
+                  }}
+                  onClick={() => {
+                    const input = document.createElement('input')
+                    input.type = 'file'
+                    input.accept = '.csv'
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0]
+                      if (file) handleCSVFileSelected(file)
+                    }
+                    input.click()
+                  }}
+                >
+                  {importFile ? (
+                    <div>
+                      <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900">{importFile.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">{(importFile.size / 1024).toFixed(1)} KB</p>
+                      <p className="text-xs text-purple-600 mt-2 cursor-pointer hover:underline">انقر لاختيار ملف آخر</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-600">اسحب الملف هنا أو انقر للاختيار</p>
+                      <p className="text-xs text-gray-400 mt-1">CSV فقط - حد أقصى 10MB</p>
+                    </div>
+                  )}
+                </div>
+
+                {importError && (
+                  <p className="text-red-500 text-sm mt-3 text-center">{importError}</p>
+                )}
+
+                <div className="flex gap-3 justify-center mt-6">
+                  <button
+                    onClick={resetImportModal}
+                    className="px-6 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (importFile && csvHeaders.length > 0) setImportStep(2)
+                    }}
+                    disabled={!importFile || csvHeaders.length === 0}
+                    className="px-6 py-2.5 text-white rounded-xl font-semibold transition disabled:opacity-50"
+                    style={{ backgroundColor: COLORS.primary }}
+                  >
+                    التالي
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: Column Mapping */}
+            {importStep === 2 && (
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">تحديد الأعمدة</h3>
+                <p className="text-gray-500 text-sm mb-6 text-center">حدد الأعمدة المطابقة في ملف CSV</p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">عمود البريد الإلكتروني *</label>
+                    <select
+                      value={importMapping.emailColumn}
+                      onChange={(e) => setImportMapping(prev => ({ ...prev, emailColumn: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-right focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">-- اختر العمود --</option>
+                      {csvHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">عمود الاسم</label>
+                    <select
+                      value={importMapping.nameColumn}
+                      onChange={(e) => setImportMapping(prev => ({ ...prev, nameColumn: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-right focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">لا يوجد</option>
+                      {csvHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">عمود الهاتف</label>
+                    <select
+                      value={importMapping.phoneColumn}
+                      onChange={(e) => setImportMapping(prev => ({ ...prev, phoneColumn: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-right focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">لا يوجد</option>
+                      {csvHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                {csvPreview.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs font-medium text-gray-500 mb-2">معاينة أول {csvPreview.length} صفوف:</p>
+                    <div className="overflow-x-auto rounded-lg border border-gray-200">
+                      <table className="w-full text-xs">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            {csvHeaders.map((h) => (
+                              <th key={h} className="px-3 py-2 text-right font-medium text-gray-600">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {csvPreview.map((row, i) => (
+                            <tr key={i}>
+                              {row.map((cell, j) => (
+                                <td key={j} className="px-3 py-2 text-gray-700 max-w-[120px] truncate">{cell}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Consent Checkbox */}
+                <label className="flex items-start gap-3 mt-5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={importConsent}
+                    onChange={(e) => setImportConsent(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">أؤكد أنني حصلت على موافقة جهات الاتصال هذه لاستقبال البريد</span>
+                </label>
+
+                {importError && (
+                  <p className="text-red-500 text-sm mt-3 text-center">{importError}</p>
+                )}
+
+                <div className="flex gap-3 justify-center mt-6">
+                  <button
+                    onClick={() => setImportStep(1)}
+                    className="px-6 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition"
+                  >
+                    رجوع
+                  </button>
+                  <button
+                    onClick={handleImportSubmit}
+                    disabled={!importMapping.emailColumn || !importConsent}
+                    className="px-6 py-2.5 text-white rounded-xl font-semibold transition disabled:opacity-50"
+                    style={{ backgroundColor: COLORS.primary }}
+                  >
+                    بدء الاستيراد
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: Processing & Results */}
+            {importStep === 3 && (
+              <div>
+                {importLoading ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-4 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+                    <p className="text-lg font-semibold text-gray-900">جاري الاستيراد...</p>
+                    <p className="text-sm text-gray-500 mt-1">يتم التحقق من صحة الإيميلات وإضافة جهات الاتصال</p>
+                  </div>
+                ) : importError ? (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-red-50 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">فشل الاستيراد</h3>
+                    <p className="text-red-500 text-sm mb-6">{importError}</p>
+                    <button
+                      onClick={() => { setImportStep(2); setImportError(null) }}
+                      className="px-6 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition"
+                    >
+                      رجوع
+                    </button>
+                  </div>
+                ) : importResults ? (
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-green-50 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">اكتمل الاستيراد</h3>
+
+                    <div className="space-y-3 text-right bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">إجمالي الصفوف</span>
+                        <span className="font-semibold text-gray-900">{importResults.total}</span>
+                      </div>
+                      <div className="border-t border-gray-200 pt-2" />
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-green-700 font-medium">تم استيراد</span>
+                        <span className="font-bold text-green-700">{importResults.imported}</span>
+                      </div>
+                      {importResults.skipped?.invalid_syntax > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">صيغة خاطئة</span>
+                          <span className="font-semibold text-red-600">{importResults.skipped.invalid_syntax}</span>
+                        </div>
+                      )}
+                      {importResults.skipped?.invalid_mx > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">دومين غير صالح</span>
+                          <span className="font-semibold text-red-600">{importResults.skipped.invalid_mx}</span>
+                        </div>
+                      )}
+                      {importResults.skipped?.disposable > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-orange-600">إيميل مؤقت</span>
+                          <span className="font-semibold text-orange-600">{importResults.skipped.disposable}</span>
+                        </div>
+                      )}
+                      {importResults.skipped?.blocked > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">محظور</span>
+                          <span className="font-semibold text-red-600">{importResults.skipped.blocked}</span>
+                        </div>
+                      )}
+                      {importResults.skipped?.duplicate > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-yellow-600">مكرر</span>
+                          <span className="font-semibold text-yellow-600">{importResults.skipped.duplicate}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        resetImportModal()
+                        fetchContacts()
+                        fetchStats()
+                      }}
+                      className="mt-6 px-8 py-2.5 text-white rounded-xl font-semibold transition"
+                      style={{ backgroundColor: COLORS.primary }}
+                    >
+                      إغلاق
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
       )}
