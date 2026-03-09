@@ -16,6 +16,18 @@ export const setToken = (token) => {
 };
 
 export const getToken = () => {
+  // أولاً: جرب من URL params (للـ iframe navigation)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawToken = urlParams.get('token');
+    if (rawToken) {
+      const decoded = decodeURIComponent(rawToken);
+      localStorage.setItem(TOKEN_KEY, decoded);
+      return decoded;
+    }
+  } catch (e) {
+    // ignore - SSR or no window
+  }
   return localStorage.getItem(TOKEN_KEY);
 };
 
