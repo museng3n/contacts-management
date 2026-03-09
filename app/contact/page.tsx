@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 
 function getAvatarColor(name: string) {
@@ -90,6 +90,10 @@ function ContactDetailsInner() {
   ])
   const [isAdding, setIsAdding] = useState(false)
   const [newNote, setNewNote] = useState("")
+  const [tags, setTags] = useState<string[]>([])
+  const [showTagInput, setShowTagInput] = useState(false)
+  const [newTagValue, setNewTagValue] = useState("")
+  const tagInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!contactId) return
@@ -106,6 +110,7 @@ function ContactDetailsInner() {
         if (data.status === 'success') {
           const contactData = data.data?.gh1 || data.data
           setContact(contactData)
+          setTags(contactData.tags || [])
         }
         setLoading(false)
       })
@@ -125,6 +130,46 @@ function ContactDetailsInner() {
       setNotes([{ id: Date.now().toString(), author:"أنت", time:"الآن", content:newNote }, ...notes])
       setNewNote(""); setIsAdding(false)
     }
+  }
+
+  const getToken = () => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const rawToken = urlParams.get('token')
+    return rawToken ? decodeURIComponent(rawToken) : localStorage.getItem('authToken')
+  }
+
+  const updateTags = async (newTags: string[]) => {
+    const token = getToken()
+    if (!token || !contactId) return
+    try {
+      const res = await fetch(`https://triggerio-backend.onrender.com/api/contacts/${contactId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tags: newTags })
+      })
+      const data = await res.json()
+      if (data.status === 'success') {
+        setTags(newTags)
+      } else {
+        alert(data.message || 'فشل تحديث التاجات')
+      }
+    } catch {
+      alert('فشل الاتصال بالسيرفر')
+    }
+  }
+
+  const handleAddTag = () => {
+    const val = newTagValue.trim()
+    if (!val) return
+    if (tags.some(t => t.toLowerCase() === val.toLowerCase())) {
+      setNewTagValue(""); setShowTagInput(false); return
+    }
+    updateTags([...tags, val])
+    setNewTagValue(""); setShowTagInput(false)
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    updateTags(tags.filter(t => t !== tagToRemove))
   }
 
   return (
@@ -322,13 +367,40 @@ function ContactDetailsInner() {
               <div>
                 <label className="text-[12px] text-[#9CA3AF] block mb-3">التاجات</label>
                 <div className="flex flex-wrap gap-2">
-                  {(contact.tags || []).map((tag: string) => (
-                    <span key={tag} className="px-3 py-1.5 bg-[#F3F4F6] text-[#374151] rounded-lg text-[12px] font-[600]">{tag}</span>
+                  {tags.map((tag: string) => (
+                    <span key={tag} className="group px-3 py-1.5 bg-[#F3F4F6] text-[#374151] rounded-lg text-[12px] font-[600] inline-flex items-center gap-1">
+                      {tag}
+                      <button onClick={() => handleRemoveTag(tag)}
+                        className="opacity-0 group-hover:opacity-100 text-[#9CA3AF] hover:text-[#EF4444] transition-opacity mr-0.5">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </span>
                   ))}
-                  <button className="px-3 py-1.5 border-2 border-dashed border-[#7C3AED] text-[#7C3AED] rounded-lg text-[12px] font-[600] flex items-center gap-1 hover:bg-[#F3F4F6]">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    إضافة تاج
-                  </button>
+                  {showTagInput ? (
+                    <div className="inline-flex items-center gap-1">
+                      <input
+                        ref={tagInputRef}
+                        value={newTagValue}
+                        onChange={e => setNewTagValue(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleAddTag(); if (e.key === 'Escape') { setShowTagInput(false); setNewTagValue("") } }}
+                        placeholder="اكتب اسم التاج..."
+                        autoFocus
+                        className="px-2 py-1 border border-[#7C3AED] rounded-lg text-[12px] w-28 focus:outline-none focus:ring-1 focus:ring-[#7C3AED]"
+                      />
+                      <button onClick={handleAddTag} className="text-[#10B981] hover:text-[#059669]">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      </button>
+                      <button onClick={() => { setShowTagInput(false); setNewTagValue("") }} className="text-[#9CA3AF] hover:text-[#EF4444]">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setShowTagInput(true)}
+                      className="px-3 py-1.5 border-2 border-dashed border-[#7C3AED] text-[#7C3AED] rounded-lg text-[12px] font-[600] flex items-center gap-1 hover:bg-[#F3F4F6]">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      إضافة تاج
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
