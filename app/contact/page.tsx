@@ -1,5 +1,6 @@
 "use client"
-import { useState } from "react"
+import { useState, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 
 function getAvatarColor(name: string) {
   const colors = ["#7C3AED","#2563EB","#059669","#D97706","#DC2626","#0891B2"]
@@ -86,7 +87,10 @@ function getScoreLabel(score: number) {
   return { label: "ضعيف", color: "#EF4444" }
 }
 
-export default function ContactDetailsPage() {
+function ContactDetailsInner() {
+  const searchParams = useSearchParams()
+  const contactId = searchParams.get('id')
+
   const contact = mockContact
   const [showAll, setShowAll] = useState(false)
   const [notes, setNotes] = useState([
@@ -316,5 +320,13 @@ export default function ContactDetailsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ContactDetailsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div></div>}>
+      <ContactDetailsInner />
+    </Suspense>
   )
 }

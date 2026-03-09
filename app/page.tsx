@@ -570,9 +570,9 @@ export default function ContactsPage() {
                         key={contact.id}
                         onClick={() => {
                           if (window.parent !== window) {
-                            window.parent.postMessage({ type: 'NAVIGATE', url: `https://contacts-management-plum.vercel.app/contacts/${contact.id}` }, '*')
+                            window.parent.postMessage({ type: 'NAVIGATE', url: `https://contacts-management-plum.vercel.app/contact?id=${contact.id}` }, '*')
                           } else {
-                            window.location.href = `/contacts/${contact.id}`
+                            window.location.href = `/contact?id=${contact.id}`
                           }
                         }}
                         className={`hover:bg-gray-50 transition-colors cursor-pointer ${
@@ -666,7 +666,7 @@ export default function ContactsPage() {
                           </button>
                           {activeDropdown === contact.id && (
                             <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                              <button onClick={(e) => { e.stopPropagation(); if (window.parent !== window) { window.parent.postMessage({ type: 'NAVIGATE', url: `https://contacts-management-plum.vercel.app/contacts/${contact.id}` }, '*') } else { window.location.href = `/contacts/${contact.id}` } }} className="w-full px-4 py-2 text-right text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                              <button onClick={(e) => { e.stopPropagation(); if (window.parent !== window) { window.parent.postMessage({ type: 'NAVIGATE', url: `https://contacts-management-plum.vercel.app/contact?id=${contact.id}` }, '*') } else { window.location.href = `/contact?id=${contact.id}` } }} className="w-full px-4 py-2 text-right text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
