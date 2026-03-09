@@ -94,7 +94,10 @@ function ContactDetailsInner() {
 
   useEffect(() => {
     if (!contactId) return
-    const token = localStorage.getItem('authToken')
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlToken = urlParams.get('token')
+    const token = urlToken || localStorage.getItem('authToken')
+    if (!token) { setLoading(false); return }
     fetch(`https://triggerio-backend.onrender.com/api/contacts/${contactId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
