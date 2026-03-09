@@ -94,6 +94,7 @@ function ContactDetailsInner() {
   const [showTagInput, setShowTagInput] = useState(false)
   const [newTagValue, setNewTagValue] = useState("")
   const tagInputRef = useRef<HTMLInputElement>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   useEffect(() => {
     if (!contactId) return
@@ -172,8 +173,11 @@ function ContactDetailsInner() {
     updateTags(tags.filter(t => t !== tagToRemove))
   }
 
-  const handleDeleteContact = async () => {
-    if (!confirm("هل أنت متأكد من حذف جهة الاتصال؟")) return
+  const handleDeleteContact = () => {
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
     const token = getToken()
     if (!token || !contactId) return
     try {
@@ -183,6 +187,7 @@ function ContactDetailsInner() {
       })
       const data = await res.json()
       if (data.status === 'success') {
+        setShowDeleteModal(false)
         if (window.parent !== window) {
           window.parent.postMessage({ type: 'NAVIGATE', url: 'https://contacts-management-plum.vercel.app' }, '*')
         } else {
@@ -190,9 +195,11 @@ function ContactDetailsInner() {
         }
       } else {
         alert(data.message || 'فشل حذف جهة الاتصال')
+        setShowDeleteModal(false)
       }
     } catch {
       alert('فشل الاتصال بالسيرفر')
+      setShowDeleteModal(false)
     }
   }
 
@@ -432,6 +439,37 @@ function ContactDetailsInner() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-red-50 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">حذف جهة الاتصال</h3>
+            <p className="text-gray-500 text-sm mb-6">
+              هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جهة الاتصال وجميع بياناتها نهائياً.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-6 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition"
+              >
+                نعم، احذف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
