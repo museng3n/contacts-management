@@ -95,7 +95,8 @@ function ContactDetailsInner() {
   useEffect(() => {
     if (!contactId) return
     const urlParams = new URLSearchParams(window.location.search)
-    const urlToken = urlParams.get('token')
+    const rawToken = urlParams.get('token')
+    const urlToken = rawToken ? decodeURIComponent(rawToken) : null
     const token = urlToken || localStorage.getItem('authToken')
     if (!token) { setLoading(false); return }
     fetch(`https://triggerio-backend.onrender.com/api/contacts/${contactId}`, {
