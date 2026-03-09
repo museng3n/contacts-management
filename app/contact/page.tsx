@@ -106,7 +106,10 @@ function ContactDetailsInner() {
       .then(r => r.json())
       .then(data => {
         console.log('API Response:', JSON.stringify(data))
-        if (data.success) setContact(data.data)
+        if (data.status === 'success') {
+          const contactData = data.data?.gh1 || data.data
+          setContact(contactData)
+        }
         setLoading(false)
       })
       .catch(() => setLoading(false))
