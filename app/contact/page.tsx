@@ -1,5 +1,5 @@
 "use client"
-import { useState, Suspense } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 
 function getAvatarColor(name: string) {
@@ -49,14 +49,6 @@ const THERMAL = {
   },
 }
 
-const mockContact = {
-  id: "1", name: "مصطفى محمود", username: "@mustafa_tech",
-  email: "mustafa@example.com", phone: "+966 50 123 4567",
-  source: "Instagram", group: "Tech Startups Q4",
-  stage: "sql", temperature: "hot", score: 85,
-  lastContact: "منذ ساعة", addedDate: "15 نوفمبر 2024",
-  tags: ["مهتم", "متابع", "في"],
-}
 
 const activities = [
   { id:"1", text:"حفظ البوست", platform:"Instagram", time:"منذ 10 دقائق", detail:null, bg:"#D1FAE5",
@@ -91,7 +83,8 @@ function ContactDetailsInner() {
   const searchParams = useSearchParams()
   const contactId = searchParams.get('id')
 
-  const contact = mockContact
+  const [contact, setContact] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [notes, setNotes] = useState([
     { id:"1", author:"المدير الإداري", time:"منذ يوم", content:"مهتم جداً بالمنتج، طلب عرض سعر مخصص" }
@@ -99,9 +92,26 @@ function ContactDetailsInner() {
   const [isAdding, setIsAdding] = useState(false)
   const [newNote, setNewNote] = useState("")
 
+  useEffect(() => {
+    if (!contactId) return
+    const token = localStorage.getItem('authToken')
+    fetch(`https://triggerio-backend.onrender.com/api/contacts/${contactId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setContact(data.data)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [contactId])
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div></div>
+  if (!contact) return <div className="min-h-screen flex items-center justify-center text-gray-500">جهة الاتصال غير موجودة</div>
+
   const thermal = THERMAL[contact.temperature as keyof typeof THERMAL] || THERMAL.cold
   const currentStageIdx = STAGES.findIndex(s => s.id === contact.stage)
-  const scoreInfo = getScoreLabel(contact.score)
+  const scoreInfo = getScoreLabel(contact.engagementScore || 0)
   const displayed = showAll ? activities : activities.slice(0, 3)
 
   const addNote = () => {
@@ -143,7 +153,7 @@ function ContactDetailsInner() {
                   </div>
                   <div>
                     <h1 className="text-[24px] font-[700] text-[#374151] mb-1">{contact.name}</h1>
-                    <p className="text-[14px] text-[#7C3AED] mb-1">{contact.username}</p>
+                    <p className="text-[14px] text-[#7C3AED] mb-1">{contact.instagramUsername || contact.username || ''}</p>
                     <p className="text-[14px] text-[#6B7280] mb-1">{contact.email}</p>
                     <p className="text-[14px] text-[#9CA3AF]">{contact.source}</p>
                   </div>
@@ -155,7 +165,7 @@ function ContactDetailsInner() {
                     {thermal.icon}
                     {thermal.label}
                   </span>
-                  <div className="mt-2 text-[12px] text-[#6B7280]">آخر تفاعل: {contact.lastContact}</div>
+                  <div className="mt-2 text-[12px] text-[#6B7280]">آخر تفاعل: {contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString('ar-SA') : '—'}</div>
                 </div>
               </div>
 
@@ -201,11 +211,11 @@ function ContactDetailsInner() {
               <h2 className="text-[18px] font-[700] text-[#374151] mb-6">مستوى التفاعل</h2>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[16px] font-[600]" style={{ color: scoreInfo.color }}>{scoreInfo.label}</span>
-                <span className="text-[28px] font-[700] text-[#7C3AED]">{contact.score}/100</span>
+                <span className="text-[28px] font-[700] text-[#7C3AED]">{contact.engagementScore || 0}/100</span>
               </div>
               <div className="w-full h-4 bg-[#F3F4F6] rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-500"
-                  style={{ width:`${contact.score}%`, background:"linear-gradient(to left, #6D28D9, #7C3AED)" }} />
+                  style={{ width:`${contact.engagementScore || 0}%`, background:"linear-gradient(to left, #6D28D9, #7C3AED)" }} />
               </div>
             </div>
 
@@ -290,11 +300,11 @@ function ContactDetailsInner() {
                   { label:"الاسم الكامل", value:contact.name },
                   { label:"البريد الإلكتروني", value:contact.email },
                   { label:"الهاتف", value:contact.phone },
-                  { label:"المنصة", value:`${contact.source} (${contact.username})` },
-                  { label:"المصدر", value:`${contact.source} Business` },
-                  { label:"المجموعة", value:contact.group },
-                  { label:"تاريخ الإضافة", value:contact.addedDate },
-                  { label:"آخر تحديث", value:contact.lastContact },
+                  { label:"المنصة", value:`${contact.source || '—'} (${contact.instagramUsername || contact.username || '—'})` },
+                  { label:"المصدر", value:`${contact.source || '—'}` },
+                  { label:"المجموعة", value:contact.group || '—' },
+                  { label:"تاريخ الإضافة", value:contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('ar-SA') : '—' },
+                  { label:"آخر تحديث", value:contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString('ar-SA') : '—' },
                 ].map((item, i) => (
                   <div key={i}>
                     <label className="text-[12px] text-[#9CA3AF] block mb-1">{item.label}</label>
@@ -306,7 +316,7 @@ function ContactDetailsInner() {
               <div>
                 <label className="text-[12px] text-[#9CA3AF] block mb-3">التاجات</label>
                 <div className="flex flex-wrap gap-2">
-                  {contact.tags.map(tag => (
+                  {(contact.tags || []).map((tag: string) => (
                     <span key={tag} className="px-3 py-1.5 bg-[#F3F4F6] text-[#374151] rounded-lg text-[12px] font-[600]">{tag}</span>
                   ))}
                   <button className="px-3 py-1.5 border-2 border-dashed border-[#7C3AED] text-[#7C3AED] rounded-lg text-[12px] font-[600] flex items-center gap-1 hover:bg-[#F3F4F6]">
