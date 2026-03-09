@@ -112,7 +112,13 @@ export default function ContactDetailsPage() {
       <div className="max-w-[1400px] mx-auto">
 
         {/* Back */}
-        <button onClick={() => window.history.back()}
+        <button onClick={() => {
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'NAVIGATE', url: 'https://contacts-management-plum.vercel.app' }, '*')
+            } else {
+              window.history.back()
+            }
+          }}
           className="inline-flex items-center gap-2 text-[#7C3AED] hover:text-[#6D28D9] mb-6 text-[14px] font-[600]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           العودة إلى جهات الاتصال
